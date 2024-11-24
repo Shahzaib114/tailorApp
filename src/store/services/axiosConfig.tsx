@@ -5,7 +5,6 @@ import {
 } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import {Constant_Values} from '@utils/appConstants';
 import {PROD_URL} from './tempEnv';
 import { store } from '../store';
 export const navigationRef = createNavigationContainerRef();
@@ -66,21 +65,5 @@ dataServer.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-export const gptSpeechToTextInstance = axios.create({
-  baseURL: Constant_Values.STTBaseURL,
-  headers: {
-    'Content-Type': 'multipart/form-data',
-    Authorization: `Bearer ${Constant_Values.GPT_KEY}`,
-  },
-});
-
-export const gptInstance = axios.create({
-  baseURL: Constant_Values.GPTInstanceBaseURL,
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${Constant_Values.GPT_KEY}`,
-  },
-});
 
 export {dataServer};

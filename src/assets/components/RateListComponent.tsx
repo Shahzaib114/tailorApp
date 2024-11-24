@@ -7,6 +7,7 @@ import moment from 'moment';
 import { Calendar } from 'react-native-calendars';
 import { verticalScale } from 'react-native-size-matters';
 import { APPJSONFILES } from '../../utils/JsonFiles';
+import SelectedItemsList from '../../components/Modal/selectedItemsModal';
 
 const RateListComponent = () => {
     // State to manage each item with notes
@@ -91,6 +92,7 @@ const RateListComponent = () => {
 
     return (
         <View style={styles.mainContainer}>
+            <SelectedItemsList rateList={selectedItems} isVisible={true} onClose={() => { }} />
             <FlatList
                 data={items}
                 keyExtractor={(item, index) => index.toString()}

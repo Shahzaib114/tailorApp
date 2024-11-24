@@ -157,3 +157,7 @@ export const Colors = {
     white: "rgba(255,255,255, 0.4)",
   },
 };
+export const Constant_Values = {
+  STTBaseURL: 'https://api.openai.com/v1/audio',
+  GPTInstanceBaseURL: 'https://api.openai.com/v1',
+};

@@ -1,18 +1,26 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { searchUser } from '../../store/reducers/ApiHelpers';
 
 const SearchUserInfo = () => {
-    const [name, setName] = useState('');
+    const [seriolNo, setSeriolNo] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const navigation = useNavigation()
+    const dispatch = useDispatch()
 
-    const handleSave = () => {
+    const handleSave = async () => {
         // Placeholder function to handle save action
-        navigation.navigate('OrderDetails')
-        console.log('Name:', name);
-        console.log('Phone Number:', phoneNumber);
+        const userRes = await dispatch(searchUser({ seriolNo, phoneNumber }))
+        console.log('userRes:', userRes);
+        // navigation.navigate('OrderDetails')
     };
+
+    const handleNewOrder = () => {
+        navigation.navigate('RateListComponent')
+    }
+
 
     return (
         <View style={styles.container}>
@@ -24,10 +32,12 @@ const SearchUserInfo = () => {
                 <TextInput
                     style={styles.input}
                     placeholder="...."
-                    value={name}
-                    onChangeText={setName}
+                    value={seriolNo}
+                    onChangeText={setSeriolNo}
                 />
             </View>
+
+            
 
             {/* Phone Number Input */}
             <View style={styles.inputContainer}>
@@ -44,6 +54,10 @@ const SearchUserInfo = () => {
             {/* Save Button */}
             <TouchableOpacity style={styles.button} onPress={handleSave}>
                 <Text style={styles.buttonText}>Search</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.button} onPress={handleNewOrder}>
+                <Text style={styles.buttonText}>New Order</Text>
             </TouchableOpacity>
         </View>
     );
