@@ -1,20 +1,32 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ToastAndroid } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { searchUser } from '../../store/reducers/ApiHelpers';
+import { horizontalScale, moderateScale, verticalScale } from '../../utils';
+import { getUserByIdentifier } from '../../components/handleSearchComp';
 
 const SearchUserInfo = () => {
     const [seriolNo, setSeriolNo] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const navigation = useNavigation()
-    const dispatch = useDispatch()
 
     const handleSave = async () => {
         // Placeholder function to handle save action
-        const userRes = await dispatch(searchUser({ seriolNo, phoneNumber }))
-        console.log('userRes:', userRes);
-        // navigation.navigate('OrderDetails')
+        if (phoneNumber === '' && seriolNo === '') {
+            ToastAndroid.show('please enter SERIOL NO. or PHONE NUMBER!', ToastAndroid.LONG)
+            return
+        }
+        const user = await getUserByIdentifier(seriolNo, phoneNumber)
+        if (!user) {
+            ToastAndroid.show('Details not found!', ToastAndroid.SHORT)
+            return
+        } else {
+            // @ts-ignore
+            navigation.navigate('OrderDetails', {
+                seriolNo: seriolNo,
+                phoneNumber: phoneNumber,
+            })
+        }
     };
 
     const handleNewOrder = () => {
@@ -24,41 +36,52 @@ const SearchUserInfo = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.headerText}>{`Enter Details of Customer \n \n \n You can search by serial no. or phone number`} </Text>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ justifyContent: 'space-evenly', flex: 1 }}
+            >
+                <View style={styles.imageWrapper}>
+                    <Image
+                        source={require('../../assets/images/laundryBasket.png')} // Replace with your desired image URL
+                        style={styles.image}
+                        resizeMode="contain"
+                    />
+                </View>
+                <Text style={styles.headerText}>{`Superior Cleaners`} </Text>
 
-            {/* Name Input */}
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Seriol no.</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="...."
-                    value={seriolNo}
-                    onChangeText={setSeriolNo}
-                />
-            </View>
+                {/* Name Input */}
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Seriol no.</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="...."
+                        value={seriolNo}
+                        keyboardType="phone-pad"
+                        onChangeText={setSeriolNo}
+                    />
+                </View>
 
-            
+                {/* Phone Number Input */}
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Phone Number</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="...."
+                        keyboardType="phone-pad"
+                        value={phoneNumber}
+                        onChangeText={setPhoneNumber}
+                    />
+                </View>
 
-            {/* Phone Number Input */}
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Phone Number</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter phone number"
-                    keyboardType="phone-pad"
-                    value={phoneNumber}
-                    onChangeText={setPhoneNumber}
-                />
-            </View>
+                {/* Save Button */}
+                <TouchableOpacity style={styles.button} onPress={handleSave}>
+                    <Text style={styles.buttonText}>Search</Text>
+                </TouchableOpacity>
 
-            {/* Save Button */}
-            <TouchableOpacity style={styles.button} onPress={handleSave}>
-                <Text style={styles.buttonText}>Search</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.button} onPress={handleNewOrder}>
-                <Text style={styles.buttonText}>New Order</Text>
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={handleNewOrder}>
+                    <Text style={styles.buttonText}>New Order</Text>
+                </TouchableOpacity>
+            </ScrollView>
         </View>
     );
 };
@@ -69,6 +92,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#f2f2f2',
         justifyContent: 'center',
         paddingHorizontal: 20,
+    },
+    imageWrapper: {
+        width: horizontalScale(150),
+        height: verticalScale(150),
+        alignSelf: 'center',
+        marginTop: moderateScale(10)
+    },
+    image: {
+        width: '100%',
+        height: '100%',
     },
     headerText: {
         fontSize: 24,

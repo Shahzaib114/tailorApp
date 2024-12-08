@@ -1,105 +1,195 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, Modal, Animated, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, Animated, Image, Alert } from 'react-native';
 import { CustomCheckBox } from './CustomCheckBox';
 import { Colors } from '../../utils/appConstants';
-import { TextComp } from './text/TextComp';
-import moment from 'moment';
-import { Calendar } from 'react-native-calendars';
-import { verticalScale } from 'react-native-size-matters';
 import { APPJSONFILES } from '../../utils/JsonFiles';
 import SelectedItemsList from '../../components/Modal/selectedItemsModal';
+import { useDispatch } from 'react-redux';
+import { OrderNewUser } from '../../store/reducers/ApiHelpers';
+import firestore from '@react-native-firebase/firestore';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import { TextComp } from './text/TextComp';
+import { horizontalScale, verticalScale } from '../../utils';
+import BackButtonComp from './backButton/BackButtonComp';
 
 const RateListComponent = () => {
-    // State to manage each item with notes
-    const [selectedItems, setSelectedItems] = useState([])
-    const [deliveryDate, setdeliveryDate] = useState()
-    const [openCalendar, setOpenCalendar] = useState(false)
-    const opacity = useRef(new Animated.Value(1)).current;
-    const [rateList, setRateList] = useState(APPJSONFILES.rateList)
+    const navigation = useNavigation();
+    const isFocused = useIsFocused();
+    const [clonedArray, setClonedArray] = useState([])
+
+    const [items, setItems] = useState(APPJSONFILES.rateList.map((item) => ({
+        ...item,
+        isChecked: false,
+        quantity: 1,
+        price: item.price.toString(),
+        notes: '',
+    })));
+    const [searchText, setSearchText] = useState('');
+    const [filteringProcess, setFilteringProcess] = useState(APPJSONFILES.rateList.map((item) => ({
+        ...item,
+        isChecked: false,
+        quantity: 1,
+        price: item.price.toString(),
+        notes: '',
+    })))
+    const [selectedItems, setSelectedItems] = useState([]);
+
+    // Update selected items whenever the `items` state changes
+    useEffect(() => {
+        const selectedObjects = filteringProcess.filter((item) => item.isChecked);
+        // setFilteringProcess(items)
+    }, [filteringProcess]);
 
     useEffect(() => {
-        if (selectedItems?.length > 0) {
-            startBlinking();
-        }
-    }, [opacity, selectedItems]);
-
-    const startBlinking = () => {
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(opacity, {
-                    toValue: 0,
-                    duration: 500,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(opacity, {
-                    toValue: 1,
-                    duration: 500,
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
-    };
-
-    const [items, setItems] = useState(
-        rateList.map((item) => ({
+        setItems(APPJSONFILES.rateList.map((item) => ({
             ...item,
             isChecked: false,
-            quantity: item.quantity,
+            quantity: 1,
             price: item.price.toString(),
-            notes: item.notes || '', // Initialize notes as an empty string if not provided
-        }))
-    );
+            notes: '',
+        })))
+    }, [isFocused]);
 
     useEffect(() => {
-        const selectedObjects = items?.filter(item => { return item?.isChecked === true })
-        setSelectedItems(selectedObjects)
-    }, [items])
+        handleSelecteditems()
+    }, [filteringProcess]);
 
+
+    // Toggle checkbox for an item
     const toggleCheckbox = (index) => {
-        const updatedItems = items.map((item, i) =>
+        const updatedItems = filteringProcess.map((item, i) =>
             i === index ? { ...item, isChecked: !item.isChecked } : item
         );
-        setItems(updatedItems);
+        // handleSelecteditems()
+        setFilteringProcess(updatedItems);
     };
 
+    // Increment quantity
     const incrementQuantity = (index) => {
-        const updatedItems = items.map((item, i) =>
+        const updatedItems = filteringProcess.map((item, i) =>
             i === index ? { ...item, quantity: item.quantity + 1 } : item
         );
-        setItems(updatedItems);
+        // setItems(updatedItems);
+        setFilteringProcess(updatedItems);
+
     };
 
+    // Decrement quantity
     const decrementQuantity = (index) => {
-        const updatedItems = items.map((item, i) =>
+        const updatedItems = filteringProcess.map((item, i) =>
             i === index && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item
         );
-        setItems(updatedItems);
-    };
+        // setItems(updatedItems);
+        setFilteringProcess(updatedItems);
 
-    const handlePriceChange = (text, index) => {
-        const updatedItems = items.map((item, i) =>
-            i === index ? { ...item, price: text } : item
-        );
-        setItems(updatedItems);
     };
-
     const handleNotesChange = (text, index) => {
-        const updatedItems = items.map((item, i) =>
+        const updatedItems = filteringProcess.map((item, i) =>
             i === index ? { ...item, notes: text } : item
         );
-        setItems(updatedItems);
+        setFilteringProcess(updatedItems);
     };
+
+
+    // Handle search input
+    const handleSelecteditems = () => {
+        const selectedObjects = filteringProcess?.filter((item) => item.isChecked);
+        setSelectedItems(selectedObjects)
+    };
+
+    const replaceMatchingObjects = (array1, array2) => {
+        return array1.map(obj1 => {
+            // Check if any object in array2 has the same name as obj1
+            const matchingObj = array2.find(obj2 => obj1.name === obj2.name);
+            // Replace obj1 with matchingObj if found, otherwise keep obj1
+            // console.log('matchingObj', array2)
+            return matchingObj ? matchingObj : obj1;
+        });
+    };
+
+    // Filter items based on the search text
+    const handleSearchItems = (txt) => {
+        setClonedArray(filteringProcess)
+        const filteredItems = items?.filter((item) =>
+            item.name.toLowerCase().includes(txt.toLowerCase())
+        );
+
+        console.log('selectedItems', selectedItems)
+        const updatedArray = replaceMatchingObjects(filteredItems, selectedItems);
+
+        // if(filteredItems){
+        setFilteringProcess(updatedArray)
+        // }
+    }
+    // Handle Search
+    const handleSearch = (text) => {
+        setSearchText(text);
+
+        if (text.trim() === '') {
+            // Show all items if search text is empty
+            // setFilteringProcess(items);
+            return;
+        }
+
+        // Filter main array based on search text
+        const filtered = items.filter((item) =>
+            item.name.toLowerCase().includes(text.toLowerCase())
+        );
+
+        // Ensure selected items are part of the filtered result if they match the search
+        const selectedAndFiltered = selectedItems.filter((item) =>
+            item.name.toLowerCase().includes(text.toLowerCase())
+        );
+
+        // Merge selected items and filtered items, removing duplicates
+        const merged = [...new Set([...selectedAndFiltered, ...filtered])];
+
+        setFilteringProcess(merged);
+    };
+    const handlePriceChange = (text, index) => {
+        const updatedItems = filteringProcess.map((item, i) =>
+            i === index ? { ...item, price: text } : item
+        );
+        setFilteringProcess(updatedItems);
+    };
+
+    // useEffect(() => {
+    //     handleSearchItems()
+    // }, [searchText])
 
     return (
         <View style={styles.mainContainer}>
-            <SelectedItemsList rateList={selectedItems} isVisible={true} onClose={() => { }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-start', width: '100%', margin: 10 }}>
+                <BackButtonComp prevName={'Back'} textColor={Colors.base.Black} />
+            </View>
+            {/* <View style={styles.inputContainer}>
+                <View style={styles.searchIconContainer}>
+                    <Image
+                        source={require('../images/searchIcon.png')}
+                        resizeMode='contain'
+                        style={styles.searchImg}
+                    />
+                </View>
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search by name"
+                    placeholderTextColor="#aaa"
+                    value={searchText}
+                    onChangeText={(txt) => {
+                        setSearchText(txt)
+                        // handleSearch(txt)
+                        handleSearchItems(txt)
+                    }}
+                />
+            </View> */}
+            <SelectedItemsList rateList={selectedItems} isVisible={false} onClose={() => { }} />
             <FlatList
-                data={items}
+                data={filteringProcess}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item, index }) => (
                     <View style={styles.itemContainer}>
                         <CustomCheckBox
-                            isChecked={item.isChecked}
+                            isChecked={item?.isChecked}
                             onPress={() => toggleCheckbox(index)}
                             color="#2196F3"
                             size={24}
@@ -146,99 +236,23 @@ const RateListComponent = () => {
                 )}
                 style={{ width: '90%', alignSelf: 'center' }}
             />
-
-            <View style={styles.cartContainer}>
-                <View style={styles.selectedListContainer}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <TextComp
-                            label={'Total items: ' + selectedItems?.length}
-                        />
-                        <TextComp
-                            label='Total Amount: 1000'
-                        />
-                        <TextComp
-                            label='Advance: 1000'
-                        />
-                    </View>
-                    <TextComp
-                        label={'Booking date: ' + moment().format('LL')}
-                    />
-                    {selectedItems?.length > 0 &&
-                        <TouchableOpacity
-                            onPress={() => {
-                                setOpenCalendar(true)
-                            }}>
-                            {
-                                deliveryDate ?
-                                    <TextComp
-                                        label={'Delivery date: ' + moment(deliveryDate).format('LL')}
-                                    />
-                                    :
-                                    <Animated.View style={[styles.blinkingView, { opacity }]}>
-                                        <TextComp
-                                            label={'Delivery date: '}
-                                        />
-                                    </Animated.View>
-                            }
-
-                        </TouchableOpacity>
+            <TouchableOpacity
+                onPress={() => {
+                    if (selectedItems?.length === 0) {
+                        Alert.alert('Please select orders')
+                        return
                     }
-                </View>
-                <TouchableOpacity
-                    onPress={() => {
-                        Alert.alert('Order place, Thank you')
-                        setSelectedItems([])
-                        setdeliveryDate(null)
-                        startBlinking()
-                    }}
-                    style={styles.cartOpacity}>
-                    <TextComp
-                        label='Place Order'
-                    />
-                </TouchableOpacity>
-            </View>
-
-            <Modal
-                visible={openCalendar}
-                transparent
-            >
-                <View style={{
-                    flex: 1,
-                    backgroundColor: Colors.transparent.extraBlack,
-                    justifyContent: 'flex-end',
-
-                }}>
-                    <View style={{
-                        justifyContent: 'flex-end',
-                        height: verticalScale(300),
-                        backgroundColor: '#ffffff',
-                        borderTopRightRadius: 20,
-                        borderTopLeftRadius: 20,
-
-                    }}>
-                        <Calendar
-                            onDayPress={day => {
-                                setdeliveryDate(day.dateString);
-                                setOpenCalendar(false)
-                            }}
-                            style={{
-                                borderColor: 'gray',
-                                height: 350,
-                            }}
-                            theme={{
-                                backgroundColor: '#ffffff',
-                                calendarBackground: '#ffffff',
-                                textSectionTitleColor: '#b6c1cd',
-                                selectedDayBackgroundColor: '#00adf5',
-                                selectedDayTextColor: '#ffffff',
-                                todayTextColor: '#00adf5',
-                                dayTextColor: '#2d4150',
-                                textDisabledColor: '#dd99ee'
-                            }}>
-                        </Calendar>
-                    </View>
-                </View>
-            </Modal>
+                    setItems(items)
+                    //@ts-ignore
+                    navigation.navigate('OrderConfirmation', {
+                        selectedItems: selectedItems
+                    })
+                }}
+                style={styles.cartOpacity}>
+                <TextComp
+                    label='Place Order'
+                />
+            </TouchableOpacity>
         </View>
     )
 }
@@ -248,6 +262,32 @@ const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
         backgroundColor: Colors.other.background
+    },
+    inputContainer: {
+        backgroundColor: Colors.base.White,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        width: '95%',
+        gap: 20,
+        paddingVertical: verticalScale(2),
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 10,
+    },
+    searchIconContainer: {
+        width: horizontalScale(20),
+        height: verticalScale(20)
+    },
+    searchImg: {
+        width: '100%',
+        height: '100%',
+    },
+    searchInput: {
+        width: '80%',
+        fontSize: 16,
+        backgroundColor: '#fff',
     },
     itemContainer: {
         flexDirection: 'row',
@@ -340,10 +380,10 @@ const styles = StyleSheet.create({
 
     },
     cartOpacity: {
-        width: '15%',
+        width: '100%',
         justifyContent: 'center',
+        padding: 20,
         alignItems: 'center',
-        borderTopRightRadius: 20,
         backgroundColor: Colors.blue.Blue300,
 
     },
