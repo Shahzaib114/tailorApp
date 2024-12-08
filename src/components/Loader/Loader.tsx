@@ -5,6 +5,7 @@ import { Colors } from '../../utils/appConstants';
 
 const Loader = ({state}: boolean) => {
   const status = useSelector((state: RootState) => state?.appData?.loading);
+  
   return (
     <Modal visible={state ? state : status} transparent>
       <View style={styles.modalContainer}>

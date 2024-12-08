@@ -5,9 +5,9 @@ import {
 } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import {Constant_Values} from '@utils/appConstants';
 import {PROD_URL} from './tempEnv';
 import { store } from '../store';
+import { Alert } from 'react-native';
 export const navigationRef = createNavigationContainerRef();
 
 function navigate() {
@@ -58,29 +58,13 @@ dataServer.interceptors.request.use(
 dataServer.interceptors.response.use(
   response => response.data,
   error => {
-    console.log('error', error.response.data);
     if (error?.response?.status === 401) {
       // Alert.alert('token expired try loggin again');
+      Alert.alert('token expired')
       navigate();
     }
     return Promise.reject(error);
   },
 );
-
-export const gptSpeechToTextInstance = axios.create({
-  baseURL: Constant_Values.STTBaseURL,
-  headers: {
-    'Content-Type': 'multipart/form-data',
-    Authorization: `Bearer ${Constant_Values.GPT_KEY}`,
-  },
-});
-
-export const gptInstance = axios.create({
-  baseURL: Constant_Values.GPTInstanceBaseURL,
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${Constant_Values.GPT_KEY}`,
-  },
-});
 
 export {dataServer};

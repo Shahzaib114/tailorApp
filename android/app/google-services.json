@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "719900747037",
+    "project_id": "superiorcleaning-ae96e",
+    "storage_bucket": "superiorcleaning-ae96e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719900747037:android:963799109a577a8555adf4",
+        "android_client_info": {
+          "package_name": "com.tailorapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnf_uxJvhzxt52c8U6Kt1ND5z8WW6I7oE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,53 +1,70 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { TextComp } from '../../assets/components/text/TextComp';
 import moment from 'moment';
-import { APPJSONFILES } from '../../utils/JsonFiles';
 import BackButtonComp from '../../assets/components/backButton/BackButtonComp';
 import { Colors } from '../../utils/appConstants';
+import { GlobalStyles } from '../../utils/GlobalStyles';
+import { getUserByIdentifier } from '../../components/handleSearchComp';
 
-const OrderDetails = () => {
+const OrderDetails = ({ route }) => {
+    const { seriolNo, phoneNumber } = route?.params
     // Destructure data passed via route parameters
-    const [rateList, setRateList] = useState(APPJSONFILES.rateList)
+    const [userDetails, setUserDetails] = useState([]);
 
-    // const { bookingData, deliveryDate, total, advance, items } = route?.params;
+    useEffect(() => {
+        getUserOrder()
+    }, [])
+
+
+    const getUserOrder = async () => {
+        const user = await getUserByIdentifier(seriolNo, phoneNumber)
+        setUserDetails(user)
+
+    }
 
     return (
         <View style={styles.container}>
-            <BackButtonComp textColor={Colors.base.Black} style={{}} prevName={'Back'}/>
+            <BackButtonComp textColor={Colors.base.Black} style={{}} prevName={'Back'} />
             <TextComp
                 style={styles.label}
-                label={'Shahzaib'} />
+                label={userDetails?.name} />
 
-            {/* Display Booking Information */}
             <View style={styles.infoContainer}>
-                <TextComp style={styles.label} label={'Booking Data:'} />
-                <TextComp style={styles.value} label={moment().format('LL')} />
+                <TextComp style={styles.label} label={'Seriol No:'} />
+                <TextComp style={styles.value} label={userDetails?.srNo} />
+
+                <TextComp style={styles.label} label={'Booking Date:'} />
+                <TextComp style={styles.value} label={moment(userDetails?.bookingDate).format('LL')} />
 
                 <TextComp style={styles.label} label={'Delivery Date:'} />
-                <Text style={styles.value}>{moment().format('LL')}</Text>
+                <Text style={styles.value}>{moment(userDetails?.deliveryDate).format('LL')}</Text>
 
                 <TextComp style={styles.label} label={'Total:'} />
-                <Text style={styles.value}>{2000} PKR</Text>
+                <Text style={styles.value}>{userDetails?.totalPrice} PKR</Text>
 
                 <TextComp style={styles.label} label={'Advance:'} />
-                <Text style={styles.value}>{1000} PKR</Text>
+                <Text style={styles.value}>{userDetails?.advance || 0} PKR</Text>
 
             </View>
 
             {/* Display Items in a List */}
             <Text style={styles.sectionTitle}>Items:</Text>
+
             <FlatList
-                data={rateList}
+                data={userDetails && userDetails?.items}
                 keyExtractor={(item, index) => index.toString()}
                 style={{ flex: 1, width: '100%' }}
-                renderItem={({ item }) => (
-                    <View style={styles.itemContainer}>
-                        <Text style={styles.itemName}>{item.name}</Text>
-                        <Text style={styles.itemDetails}>Quantity: {item.quantity}</Text>
-                        <Text style={styles.itemDetails}>Price: {item.price} PKR</Text>
-                    </View>
-                )}
+                renderItem={({ item }) => {
+                    return (
+                        <View style={styles.itemContainer}>
+                            <Text style={styles.itemName}>{item?.item}</Text>
+                            <Text style={styles.itemDetails}>Quantity: {item?.quantity}</Text>
+                            <Text style={styles.itemDetails}>Price: {item?.price} PKR</Text>
+                            <Text style={[styles.itemDetails, GlobalStyles?.body1Bold]}>Note: {item?.notes ? item?.notes : 'N/A'}</Text>
+                        </View>
+                    )
+                }}
             />
         </View>
     );
@@ -69,7 +86,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 5,
-        marginBottom: 20,
+        marginBottom: 10,
         width: '100%'
     },
     label: {
@@ -77,10 +94,7 @@ const styles = StyleSheet.create({
         color: '#666',
         marginBottom: 5,
         fontWeight: 'bold',
-        alignSelf:'center'
-                // justifyContent: 'center',
-        // alignItems: 'center',
-
+        alignSelf: 'center'
     },
     value: {
         fontSize: 16,
