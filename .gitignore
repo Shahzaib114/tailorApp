@@ -1,0 +1,8 @@
+node_modules
+pods
+Pods
+.gradle
+.cxx
+intermediates
+kotlin
+build
